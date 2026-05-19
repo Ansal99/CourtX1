@@ -329,7 +329,7 @@ DOC_CHECKLIST = {
     },
 }
 
-# Load models once
+# Load models once at startup
 models_loaded = False
 xgb = rf = explainer = encoders = label_map = metrics_data = importance = None
 
@@ -347,9 +347,11 @@ def load_models():
         with open(os.path.join(MODEL_DIR, "feature_importance.json")) as f:
             importance = json.load(f)
         models_loaded = True
+        print("✓ Models loaded successfully")
         return True
     except Exception as e:
-        print(f"Model load error: {e}")
+        print(f"⚠ Model load error: {e}")
+        print("  Run python train_model.py first to generate model files.")
         return False
 
 @app.route("/")
@@ -369,13 +371,13 @@ def get_config():
 @app.route("/api/metrics")
 def get_metrics():
     if not models_loaded:
-        return jsonify({"error": "Models not loaded"}), 500
+        return jsonify({"error": "Models not loaded. Run train_model.py first."}), 500
     return jsonify(metrics_data)
 
 @app.route("/api/importance")
 def get_importance():
     if not models_loaded:
-        return jsonify({"error": "Models not loaded"}), 500
+        return jsonify({"error": "Models not loaded. Run train_model.py first."}), 500
     return jsonify(importance)
 
 @app.route("/api/predict", methods=["POST"])
@@ -472,6 +474,8 @@ def predict():
         })
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 if __name__ == "__main__":
