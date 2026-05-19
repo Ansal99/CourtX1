@@ -14,12 +14,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,
-    f1_score, roc_auc_score, confusion_matrix, ConfusionMatrixDisplay,
+    f1_score, roc_auc_score, confusion_matrix,
     classification_report
 )
 from xgboost import XGBClassifier
 
-# ── Paths ────────────────────────────────────────────────────────────────────
+# ── Paths ─────────────────────────────────────────────────────────────────────
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH  = os.path.join(BASE_DIR, "data", "Final_dataset.csv")
 MODEL_DIR  = os.path.join(BASE_DIR, "models")
@@ -34,8 +34,11 @@ TARGET      = "outcome"
 
 
 def load_and_prepare(path):
+    print(f"Reading dataset from: {path}")
     df = pd.read_csv(path)
-    df = df[FEATURES + [TARGET]].copy()
+    print(f"Total rows: {len(df)}")
+    df = df[FEATURES + [TARGET]].dropna().copy()
+    print(f"Rows after dropna: {len(df)}")
 
     encoders = {}
     for col in CATEGORICAL:
@@ -44,7 +47,7 @@ def load_and_prepare(path):
         encoders[col] = le
 
     X = df[FEATURES]
-    y = df[TARGET]
+    y = df[TARGET].astype(int)
     return X, y, encoders
 
 
@@ -65,51 +68,32 @@ def evaluate(name, model, X_test, y_test):
     for k, v in metrics.items():
         print(f"  {k}: {v}")
 
-    # ── Classification Report ────────────────────────────────────────────────
     print(f"\n  Classification Report ({name}):")
     print(classification_report(y_test, y_pred, target_names=["Loss (0)", "Win (1)"]))
 
-    # ── Confusion Matrix — save as PNG ───────────────────────────────────────
     cm = confusion_matrix(y_test, y_pred)
-    save_confusion_matrix(cm, name, y_test, y_pred)
-
-    # ── Save confusion matrix values to metrics dict ─────────────────────────
-    metrics["confusion_matrix"] = cm.tolist()   # [[TN, FP], [FN, TP]]
-
+    save_confusion_matrix(cm, name)
+    metrics["confusion_matrix"] = cm.tolist()
     return metrics
 
 
-def save_confusion_matrix(cm, model_name, y_test, y_pred):
-    """Save a styled confusion matrix PNG to models/."""
+def save_confusion_matrix(cm, model_name):
     fig, ax = plt.subplots(figsize=(6, 5))
     sns.heatmap(
-        cm,
-        annot=True,
-        fmt="d",
-        cmap="Blues",
+        cm, annot=True, fmt="d", cmap="Blues",
         xticklabels=["Predicted Loss", "Predicted Win"],
-        yticklabels=["Actual Loss",    "Actual Win"],
-        linewidths=0.5,
-        linecolor="white",
-        ax=ax,
+        yticklabels=["Actual Loss", "Actual Win"],
+        linewidths=0.5, linecolor="white", ax=ax,
     )
-
-    # Annotate TP / TN / FP / FN
     labels = [["TN", "FP"], ["FN", "TP"]]
     for i in range(2):
         for j in range(2):
-            ax.text(
-                j + 0.5, i + 0.72,
-                labels[i][j],
-                ha="center", va="center",
-                fontsize=9, color="gray",
-            )
-
+            ax.text(j + 0.5, i + 0.72, labels[i][j],
+                    ha="center", va="center", fontsize=9, color="gray")
     tn, fp, fn, tp = cm.ravel()
     acc  = (tp + tn) / (tp + tn + fp + fn)
     prec = tp / (tp + fp) if (tp + fp) > 0 else 0
     rec  = tp / (tp + fn) if (tp + fn) > 0 else 0
-
     ax.set_title(
         f"{model_name} — Confusion Matrix\n"
         f"Accuracy: {acc*100:.1f}%  |  Precision: {prec*100:.1f}%  |  Recall: {rec*100:.1f}%",
@@ -118,60 +102,54 @@ def save_confusion_matrix(cm, model_name, y_test, y_pred):
     ax.set_xlabel("Predicted Label", fontsize=10)
     ax.set_ylabel("Actual Label",    fontsize=10)
     plt.tight_layout()
-
     fname = model_name.lower().replace(" ", "_") + "_confusion_matrix.png"
-    fpath = os.path.join(MODEL_DIR, fname)
-    fig.savefig(fpath, dpi=150, bbox_inches="tight")
+    fig.savefig(os.path.join(MODEL_DIR, fname), dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  ✓ Confusion matrix saved → models/{fname}")
 
 
 def train():
-    print("Loading data...")
+    print("=" * 50)
+    print("CourtX — Model Training")
+    print("=" * 50)
+
     X, y, encoders = load_and_prepare(DATA_PATH)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
-    print(f"Train: {len(X_train)} | Test: {len(X_test)}")
+    print(f"\nTrain: {len(X_train)} | Test: {len(X_test)}")
 
-    # ── XGBoost ──────────────────────────────────────────────────────────────
+    # ── XGBoost ───────────────────────────────────────────────────────────────
+    print("\nTraining XGBoost...")
     xgb = XGBClassifier(
-        n_estimators=300,
-        max_depth=6,
-        learning_rate=0.05,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        use_label_encoder=False,
-        eval_metric="logloss",
-        random_state=42,
-        n_jobs=-1,
+        n_estimators=300, max_depth=6, learning_rate=0.05,
+        subsample=0.8, colsample_bytree=0.8,
+        use_label_encoder=False, eval_metric="logloss",
+        random_state=42, n_jobs=-1,
     )
-    xgb.fit(X_train, y_train,
-            eval_set=[(X_test, y_test)],
-            verbose=False)
+    xgb.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
+    print("  ✓ XGBoost trained")
 
     # ── Random Forest ─────────────────────────────────────────────────────────
+    print("\nTraining Random Forest...")
     rf = RandomForestClassifier(
-        n_estimators=200,
-        max_depth=12,
-        random_state=42,
-        n_jobs=-1,
+        n_estimators=200, max_depth=12, random_state=42, n_jobs=-1,
     )
     rf.fit(X_train, y_train)
+    print("  ✓ Random Forest trained")
 
-    # ── Evaluate both (confusion matrices generated here) ────────────────────
-    xgb_metrics = evaluate("XGBoost",      xgb, X_test, y_test)
-    rf_metrics  = evaluate("RandomForest", rf,  X_test, y_test)
-
+    # ── Evaluate ──────────────────────────────────────────────────────────────
+    xgb_metrics = evaluate("XGBoost",       xgb, X_test, y_test)
+    rf_metrics  = evaluate("RandomForest",  rf,  X_test, y_test)
     all_metrics = [xgb_metrics, rf_metrics]
+
     with open(os.path.join(MODEL_DIR, "metrics.json"), "w") as f:
         json.dump(all_metrics, f, indent=2)
 
-    # ── SHAP explainer ────────────────────────────────────────────────────────
-    print("\nBuilding SHAP explainer (this takes ~30s)...")
+    # ── SHAP ──────────────────────────────────────────────────────────────────
+    print("\nBuilding SHAP explainer (may take ~1-2 min for large dataset)...")
     explainer = shap.TreeExplainer(xgb)
-
     sample      = X_test.sample(min(2000, len(X_test)), random_state=42)
     shap_values = explainer.shap_values(sample)
     mean_abs    = np.abs(shap_values).mean(axis=0)
@@ -180,7 +158,7 @@ def train():
     with open(os.path.join(MODEL_DIR, "feature_importance.json"), "w") as f:
         json.dump(importance, f, indent=2)
 
-    # ── Save all model files ──────────────────────────────────────────────────
+    # ── Save ──────────────────────────────────────────────────────────────────
     joblib.dump(xgb,       os.path.join(MODEL_DIR, "xgb_model.pkl"))
     joblib.dump(rf,        os.path.join(MODEL_DIR, "rf_model.pkl"))
     joblib.dump(explainer, os.path.join(MODEL_DIR, "shap_explainer.pkl"))
@@ -192,10 +170,18 @@ def train():
     with open(os.path.join(MODEL_DIR, "label_map.json"), "w") as f:
         json.dump(label_map, f, indent=2)
 
-    print("\n✓ All files saved to /models/")
-    print("  xgb_model.pkl | rf_model.pkl | shap_explainer.pkl")
-    print("  encoders.pkl  | label_map.json | metrics.json | feature_importance.json")
-    print("  xgboost_confusion_matrix.png | randomforest_confusion_matrix.png")
+    print("\n" + "=" * 50)
+    print("✓ Training complete! All files saved to /models/")
+    print("  xgb_model.pkl       — XGBoost model")
+    print("  rf_model.pkl        — Random Forest model")
+    print("  shap_explainer.pkl  — SHAP explainer")
+    print("  encoders.pkl        — Label encoders")
+    print("  label_map.json      — Encoder classes")
+    print("  metrics.json        — Model metrics")
+    print("  feature_importance.json — SHAP importances")
+    print("  *_confusion_matrix.png  — Confusion matrix plots")
+    print("=" * 50)
+    print("\nNow run:  python app.py")
 
 
 if __name__ == "__main__":

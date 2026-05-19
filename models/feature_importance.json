@@ -1,0 +1,15 @@
+{
+  "state": 0.0017243369948118925,
+  "case_type": 0.2564937472343445,
+  "court_level": 0.09904412925243378,
+  "evidence_strength": 0.9412885308265686,
+  "opposite_lawyer_experience": 0.6545249819755554,
+  "case_complexity": 0.11969311535358429,
+  "case_duration_years": 0.05718694627285004,
+  "has_documents": 0.013253210112452507,
+  "num_witnesses": 0.07525641471147537,
+  "legal_aid": 0.031137265264987946,
+  "settlement_attempted": 0.026813194155693054,
+  "bench_size": 0.19385279715061188,
+  "num_cited_cases": 0.1670382022857666
+}

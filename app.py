@@ -329,9 +329,9 @@ DOC_CHECKLIST = {
     },
 }
 
-# Load models once at startup
-models_loaded = False
+# ── Load models once at startup ───────────────────────────────────────────────
 xgb = rf = explainer = encoders = label_map = metrics_data = importance = None
+models_loaded = False
 
 def load_models():
     global xgb, rf, explainer, encoders, label_map, metrics_data, importance, models_loaded
@@ -340,33 +340,31 @@ def load_models():
         rf        = joblib.load(os.path.join(MODEL_DIR, "rf_model.pkl"))
         explainer = joblib.load(os.path.join(MODEL_DIR, "shap_explainer.pkl"))
         encoders  = joblib.load(os.path.join(MODEL_DIR, "encoders.pkl"))
-        with open(os.path.join(MODEL_DIR, "label_map.json")) as f:
-            label_map = json.load(f)
-        with open(os.path.join(MODEL_DIR, "metrics.json")) as f:
-            metrics_data = json.load(f)
-        with open(os.path.join(MODEL_DIR, "feature_importance.json")) as f:
-            importance = json.load(f)
+        with open(os.path.join(MODEL_DIR, "label_map.json"))        as f: label_map    = json.load(f)
+        with open(os.path.join(MODEL_DIR, "metrics.json"))          as f: metrics_data = json.load(f)
+        with open(os.path.join(MODEL_DIR, "feature_importance.json")) as f: importance  = json.load(f)
         models_loaded = True
         print("✓ Models loaded successfully")
-        return True
     except Exception as e:
-        print(f"⚠ Model load error: {e}")
-        print("  Run python train_model.py first to generate model files.")
-        return False
+        print(f"✗ Model load error: {e}")
+        print("  → Run: python train_model.py")
+
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 @app.route("/api/config")
 def get_config():
     return jsonify({
-        "states": VALID_STATES,
-        "roles": ROLES,
+        "states":        VALID_STATES,
+        "roles":         ROLES,
         "doc_checklist": DOC_CHECKLIST,
-        "case_types": list(ROLES.keys()),
-        "models_loaded": models_loaded
+        "case_types":    list(ROLES.keys()),
+        "models_loaded": models_loaded,
     })
+
 
 @app.route("/api/metrics")
 def get_metrics():
@@ -374,11 +372,13 @@ def get_metrics():
         return jsonify({"error": "Models not loaded. Run train_model.py first."}), 500
     return jsonify(metrics_data)
 
+
 @app.route("/api/importance")
 def get_importance():
     if not models_loaded:
         return jsonify({"error": "Models not loaded. Run train_model.py first."}), 500
     return jsonify(importance)
+
 
 @app.route("/api/predict", methods=["POST"])
 def predict():
@@ -387,38 +387,24 @@ def predict():
 
     data = request.json
     try:
-        state          = data["state"]
-        case_type      = data["case_type"]
-        court_level    = data["court_level"]
-        complexity     = data["case_complexity"]
-        opp_lawyer     = data["opposite_lawyer_experience"]
-        legal_aid_val  = data["legal_aid"]
-        settlement_val = data["settlement_attempted"]
-        duration       = float(data["case_duration_years"])
-        witnesses      = float(data["num_witnesses"])
-        bench_size     = float(data["bench_size"])
-        cited_cases    = float(data["num_cited_cases"])
-        has_documents  = float(data["has_documents"])
-        evidence_str   = data["evidence_strength"]
-
         row = {}
         for col, val in {
-            "state":                      state,
-            "case_type":                  case_type,
-            "court_level":                court_level,
-            "evidence_strength":          evidence_str,
-            "opposite_lawyer_experience": opp_lawyer,
-            "case_complexity":            complexity,
+            "state":                      data["state"],
+            "case_type":                  data["case_type"],
+            "court_level":                data["court_level"],
+            "evidence_strength":          data["evidence_strength"],
+            "opposite_lawyer_experience": data["opposite_lawyer_experience"],
+            "case_complexity":            data["case_complexity"],
         }.items():
             row[col] = encoders[col].transform([val])[0]
 
-        row["case_duration_years"]  = duration
-        row["has_documents"]        = has_documents
-        row["num_witnesses"]        = witnesses
-        row["legal_aid"]            = 1.0 if legal_aid_val == "Yes" else 0.0
-        row["settlement_attempted"] = 1.0 if settlement_val == "Yes" else 0.0
-        row["bench_size"]           = bench_size
-        row["num_cited_cases"]      = cited_cases
+        row["case_duration_years"]  = float(data["case_duration_years"])
+        row["has_documents"]        = float(data["has_documents"])
+        row["num_witnesses"]        = float(data["num_witnesses"])
+        row["legal_aid"]            = 1.0 if data["legal_aid"] == "Yes" else 0.0
+        row["settlement_attempted"] = 1.0 if data["settlement_attempted"] == "Yes" else 0.0
+        row["bench_size"]           = float(data["bench_size"])
+        row["num_cited_cases"]      = float(data["num_cited_cases"])
 
         X_input  = pd.DataFrame([row])[FEATURES]
         xgb_prob = float(xgb.predict_proba(X_input)[0][1])
@@ -426,57 +412,43 @@ def predict():
         win_prob = round(0.70 * xgb_prob + 0.30 * rf_prob, 4)
         win_pct  = round(win_prob * 100, 1)
 
-        if win_prob >= 0.70:
-            verdict = "Strong Case"
-        elif win_prob >= 0.50:
-            verdict = "Moderate Case"
-        else:
-            verdict = "Weak Case"
+        if win_prob >= 0.70:   verdict = "Strong Case"
+        elif win_prob >= 0.50: verdict = "Moderate Case"
+        else:                  verdict = "Weak Case"
 
-        # SHAP values
         shap_vals   = explainer.shap_values(X_input)[0]
         shap_dict   = {f: round(float(v), 4) for f, v in zip(FEATURES, shap_vals)}
         sorted_shap = sorted(shap_dict.items(), key=lambda x: x[1], reverse=True)
 
-        readable_labels = {
-            "state":                      "State",
-            "case_type":                  "Case Type",
-            "court_level":                "Court Level",
-            "evidence_strength":          "Evidence Strength",
+        readable = {
+            "state": "State", "case_type": "Case Type", "court_level": "Court Level",
+            "evidence_strength": "Evidence Strength",
             "opposite_lawyer_experience": "Opposite Lawyer Experience",
-            "case_complexity":            "Case Complexity",
-            "case_duration_years":        "Case Duration (Years)",
-            "has_documents":              "Has Documents",
-            "num_witnesses":              "Number of Witnesses",
-            "legal_aid":                  "Legal Aid Available",
-            "settlement_attempted":       "Settlement Attempted",
-            "bench_size":                 "Number of Judges",
-            "num_cited_cases":            "Cited Cases (Precedents)",
+            "case_complexity": "Case Complexity",
+            "case_duration_years": "Case Duration (Years)",
+            "has_documents": "Has Documents", "num_witnesses": "Number of Witnesses",
+            "legal_aid": "Legal Aid Available", "settlement_attempted": "Settlement Attempted",
+            "bench_size": "Number of Judges", "num_cited_cases": "Cited Cases (Precedents)",
         }
 
-        shap_result = [
-            {"feature": readable_labels.get(f, f), "value": v}
-            for f, v in sorted_shap
-        ]
-
-        pos_factors = [s for s in shap_result if s["value"] > 0][:3]
-        neg_factors = [s for s in shap_result if s["value"] < 0][:3]
+        shap_result  = [{"feature": readable.get(f, f), "value": v} for f, v in sorted_shap]
+        pos_factors  = [s for s in shap_result if s["value"] > 0][:3]
+        neg_factors  = [s for s in shap_result if s["value"] < 0][:3]
 
         return jsonify({
-            "win_probability": win_pct,
-            "win_prob_raw": win_prob,
-            "verdict": verdict,
-            "xgb_prob": round(xgb_prob * 100, 1),
-            "rf_prob": round(rf_prob * 100, 1),
-            "shap_values": shap_result,
+            "win_probability":  win_pct,
+            "win_prob_raw":     win_prob,
+            "verdict":          verdict,
+            "xgb_prob":         round(xgb_prob * 100, 1),
+            "rf_prob":          round(rf_prob  * 100, 1),
+            "shap_values":      shap_result,
             "positive_factors": pos_factors,
             "negative_factors": neg_factors,
         })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
+
 
 if __name__ == "__main__":
     load_models()

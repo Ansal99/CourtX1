@@ -1,0 +1,94 @@
+{
+  "state": [
+    "Andhra Pradesh",
+    "Assam",
+    "Bihar",
+    "Chandigarh",
+    "Chhattisgarh",
+    "DNH at Silvasa",
+    "Delhi",
+    "Diu and Daman",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jammu and Kashmir",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Ladakh",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Orissa",
+    "Puducherry",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal"
+  ],
+  "case_type": [
+    "Cheque Bounce",
+    "Civil",
+    "Consumer",
+    "Criminal",
+    "Family",
+    "Labour",
+    "Motor Accident",
+    "Property",
+    "Tax"
+  ],
+  "court_level": [
+    "District Court",
+    "High Court",
+    "Supreme Court"
+  ],
+  "evidence_strength": [
+    "Medium",
+    "Strong",
+    "Weak"
+  ],
+  "opposite_lawyer_experience": [
+    "Expert",
+    "Junior",
+    "Mid-level",
+    "Senior"
+  ],
+  "case_complexity": [
+    "High",
+    "Low",
+    "Medium"
+  ],
+  "FEATURES": [
+    "state",
+    "case_type",
+    "court_level",
+    "evidence_strength",
+    "opposite_lawyer_experience",
+    "case_complexity",
+    "case_duration_years",
+    "has_documents",
+    "num_witnesses",
+    "legal_aid",
+    "settlement_attempted",
+    "bench_size",
+    "num_cited_cases"
+  ],
+  "NUMERICAL": [
+    "case_duration_years",
+    "has_documents",
+    "num_witnesses",
+    "legal_aid",
+    "settlement_attempted",
+    "bench_size",
+    "num_cited_cases"
+  ]
+}
