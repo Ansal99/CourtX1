@@ -8,17 +8,85 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/style.css" />
+
+  <style>
+    /* ── Animated CourtX Logo ── */
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.7rem !important;
+      font-weight: 900;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Each letter animates in individually */
+    .nav-logo .letter {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(-18px) rotate(-8deg);
+      animation: letterDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .nav-logo .letter-x {
+      color: var(--gold-lt);
+      animation: letterDropX 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes letterDrop {
+      to { opacity: 1; transform: translateY(0) rotate(0deg); }
+    }
+    @keyframes letterDropX {
+      0%   { opacity: 0; transform: translateY(-18px) rotate(-8deg) scale(0.7); }
+      100% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+    }
+
+    /* Underline glow effect */
+    .nav-logo::after {
+      content: '';
+      position: absolute;
+      bottom: -3px; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), var(--gold-lt), transparent);
+      border-radius: 99px;
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: logoUnderline 0.6s ease 0.8s forwards;
+    }
+    @keyframes logoUnderline {
+      to { transform: scaleX(1); }
+    }
+
+    /* Hover glow */
+    .nav-logo:hover { text-shadow: 0 0 24px rgba(201,168,76,0.5); }
+
+    /* Nav — logo on left, links on right — standard layout */
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
 </head>
 <body>
 
   <!-- ══ NAVBAR ══ -->
   <nav class="navbar">
     <div class="nav-inner">
-      <a class="nav-logo" href="#">CourtX</a>
+      <a class="nav-logo" href="#">
+        <span class="letter" style="animation-delay:0.05s">C</span>
+        <span class="letter" style="animation-delay:0.12s">o</span>
+        <span class="letter" style="animation-delay:0.19s">u</span>
+        <span class="letter" style="animation-delay:0.26s">r</span>
+        <span class="letter" style="animation-delay:0.33s">t</span>
+        <span class="letter letter-x" style="animation-delay:0.42s">X</span>
+      </a>
       <div class="nav-links">
         <a href="#features">Features</a>
         <a href="#how-it-works">How It Works</a>
-        <a href="#predictor" class="nav-cta">Predict Now</a>
+        <a href="/predict" class="nav-cta">Predict Now</a>
       </div>
     </div>
   </nav>
@@ -39,7 +107,7 @@
         Powered by machine learning trained on <strong>966,000+</strong> real Indian court cases across 34 states. Get an honest, data-driven prediction in under 2 minutes.
       </p>
       <div class="hero-actions">
-        <a href="#predictor" class="btn-primary">Start Prediction →</a>
+        <a href="/predict" class="btn-primary">Start Prediction →</a>
         <a href="#how-it-works" class="btn-ghost">See How It Works</a>
       </div>
       <div class="hero-stats">
@@ -133,288 +201,18 @@
     </div>
   </section>
 
-  <!-- ══ PREDICTOR ══ -->
-  <section class="predictor-section" id="predictor">
-    <div class="container">
+  <!-- ══ CTA SECTION (replaces predictor on home page) ══ -->
+  <section style="padding: 100px 0; background: var(--light);">
+    <div class="container" style="text-align:center;">
       <div class="section-header">
         <span class="section-tag">AI Predictor</span>
-        <h2>Predict Your Win Probability</h2>
-        <p>Fill in the details step by step. The more accurate your inputs, the better the prediction.</p>
+        <h2>Ready to Know Your Odds?</h2>
+        <p>Our AI analyses your case across 13 parameters and gives you a clear win probability with full explanation.</p>
       </div>
-
-      <!-- Progress Bar -->
-      <div class="progress-bar-wrap">
-        <div class="progress-steps">
-          <div class="ps active" data-step="1"><span class="ps-num">1</span><span class="ps-label">Case Info</span></div>
-          <div class="ps-line"></div>
-          <div class="ps" data-step="2"><span class="ps-num">2</span><span class="ps-label">Your Role</span></div>
-          <div class="ps-line"></div>
-          <div class="ps" data-step="3"><span class="ps-num">3</span><span class="ps-label">Documents</span></div>
-          <div class="ps-line"></div>
-          <div class="ps" data-step="4"><span class="ps-num">4</span><span class="ps-label">Evidence</span></div>
-          <div class="ps-line"></div>
-          <div class="ps" data-step="5"><span class="ps-num">5</span><span class="ps-label">Result</span></div>
-        </div>
-      </div>
-
-      <div class="predictor-card">
-
-        <!-- STEP 1: BASIC CASE DETAILS -->
-        <div class="form-step active" id="step-1">
-          <h3 class="step-title">📁 Step 1 — Basic Case Details</h3>
-          <p class="step-desc">Tell us the basic information about your case.</p>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>State <span class="req">*</span></label>
-              <select id="state"><option value="">Select your state...</option></select>
-              <span class="hint">State where your case is filed</span>
-            </div>
-            <div class="form-group">
-              <label>Case Type <span class="req">*</span></label>
-              <select id="case_type"><option value="">Select case type...</option></select>
-              <span class="hint">Category that best describes your case</span>
-            </div>
-            <div class="form-group">
-              <label>Court Level <span class="req">*</span></label>
-              <select id="court_level">
-                <option value="">Select court level...</option>
-                <option>District Court</option>
-                <option>High Court</option>
-                <option>Supreme Court</option>
-              </select>
-              <span class="hint">Level of court hearing your case</span>
-            </div>
-            <div class="form-group">
-              <label>Case Complexity <span class="req">*</span></label>
-              <select id="case_complexity">
-                <option value="">Select complexity...</option>
-                <option>Low</option>
-                <option>Medium</option>
-                <option>High</option>
-              </select>
-              <span class="hint">Low = straightforward · High = multiple legal issues</span>
-            </div>
-            <div class="form-group">
-              <label>Case Duration (Years): <strong id="duration_val">3</strong></label>
-              <input type="range" id="case_duration_years" min="0" max="30" value="3" />
-              <span class="hint">How many years has this case been running?</span>
-            </div>
-            <div class="form-group">
-              <label>Number of Judges (Bench Size): <strong id="bench_val">1</strong></label>
-              <input type="range" id="bench_size" min="1" max="5" value="1" />
-              <span class="hint">Most district cases have 1 judge</span>
-            </div>
-          </div>
-          <div class="step-actions">
-            <button class="btn-next" onclick="goStep(2)">Next: Your Role →</button>
-          </div>
-        </div>
-
-        <!-- STEP 2: ROLE & LEGAL INFO -->
-        <div class="form-step" id="step-2">
-          <h3 class="step-title">👤 Step 2 — Your Role & Legal Info</h3>
-          <p class="step-desc">Tell us about your side in the case and legal support available.</p>
-          <div class="form-grid">
-            <div class="form-group full-width">
-              <label>Your Role in This Case <span class="req">*</span></label>
-              <div id="role-options" class="role-cards"></div>
-              <span class="hint">Select the side you are on</span>
-            </div>
-            <div class="form-group">
-              <label>Opposite Party's Lawyer Experience <span class="req">*</span></label>
-              <div class="option-pills" id="opp_lawyer">
-                <div class="pill" data-val="Junior">Junior<small>&lt;5 yrs</small></div>
-                <div class="pill" data-val="Mid-level">Mid-level<small>5–10 yrs</small></div>
-                <div class="pill" data-val="Senior">Senior<small>10–20 yrs</small></div>
-                <div class="pill" data-val="Expert">Expert<small>20+ yrs</small></div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Do You Have Legal Aid?</label>
-              <div class="option-pills" id="legal_aid">
-                <div class="pill" data-val="Yes">✅ Yes</div>
-                <div class="pill" data-val="No">❌ No</div>
-              </div>
-              <span class="hint">Access to a lawyer or government legal help</span>
-            </div>
-            <div class="form-group">
-              <label>Has a Settlement Been Attempted?</label>
-              <div class="option-pills" id="settlement_attempted">
-                <div class="pill" data-val="Yes">Yes</div>
-                <div class="pill" data-val="No">No</div>
-              </div>
-              <span class="hint">Any out-of-court resolution attempt?</span>
-            </div>
-            <div class="form-group">
-              <label>Number of Witnesses: <strong id="witness_val">2</strong></label>
-              <input type="range" id="num_witnesses" min="0" max="20" value="2" />
-              <span class="hint">Total witnesses who can testify in your case</span>
-            </div>
-            <div class="form-group">
-              <label>Cited Cases (Precedents): <strong id="cited_val">3</strong></label>
-              <input type="range" id="num_cited_cases" min="0" max="20" value="3" />
-              <span class="hint">Previous court judgments referenced in your case</span>
-            </div>
-          </div>
-          <div class="step-actions">
-            <button class="btn-back" onclick="goStep(1)">← Back</button>
-            <button class="btn-next" onclick="goStep(3)">Next: Documents →</button>
-          </div>
-        </div>
-
-        <!-- STEP 3: DOCUMENTS -->
-        <div class="form-step" id="step-3">
-          <h3 class="step-title">📄 Step 3 — Document Checklist</h3>
-          <p class="step-desc">Check all documents that are currently available. This calculates your evidence strength.</p>
-          <div class="doc-grid">
-            <div class="doc-col">
-              <div class="doc-col-header your-docs">
-                <span>📁 Your Documents</span>
-                <span class="doc-count" id="your-doc-count">0 / 0</span>
-              </div>
-              <div id="your-docs-list" class="doc-list"></div>
-              <div class="doc-progress-wrap">
-                <div class="doc-progress-bar" id="your-progress-bar" style="width:0%"></div>
-              </div>
-              <span class="doc-pct" id="your-pct">0% document strength</span>
-            </div>
-            <div class="doc-col">
-              <div class="doc-col-header opp-docs">
-                <span>📁 Opposite Party's Documents</span>
-                <span class="doc-count" id="opp-doc-count">0 / 0</span>
-              </div>
-              <div id="opp-docs-list" class="doc-list"></div>
-              <div class="doc-progress-wrap">
-                <div class="doc-progress-bar opp" id="opp-progress-bar" style="width:0%"></div>
-              </div>
-              <span class="doc-pct" id="opp-pct">0% document strength</span>
-            </div>
-          </div>
-          <div class="step-actions">
-            <button class="btn-back" onclick="goStep(2)">← Back</button>
-            <button class="btn-next" onclick="goStep(4)">Next: Evidence →</button>
-          </div>
-        </div>
-
-        <!-- STEP 4: EVIDENCE -->
-        <div class="form-step" id="step-4">
-          <h3 class="step-title">🔍 Step 4 — Additional Evidence</h3>
-          <p class="step-desc">Evidence beyond documents — CCTV, expert witnesses, digital records, audio/video proof, etc.</p>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Your Additional Evidence</label>
-              <div class="evidence-cards" id="your-evidence">
-                <div class="ev-card" data-val="None"><div class="ev-icon">🚫</div><strong>None</strong><small>No additional proof beyond documents</small></div>
-                <div class="ev-card" data-val="Weak"><div class="ev-icon">🔸</div><strong>Weak</strong><small>Little supporting proof available</small></div>
-                <div class="ev-card" data-val="Medium"><div class="ev-icon">🔶</div><strong>Medium</strong><small>Some solid corroborating proof</small></div>
-                <div class="ev-card" data-val="Strong"><div class="ev-icon">💎</div><strong>Strong</strong><small>Clear, hard-to-dispute evidence</small></div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Opposite Party's Additional Evidence</label>
-              <div class="evidence-cards" id="opp-evidence">
-                <div class="ev-card" data-val="None"><div class="ev-icon">🚫</div><strong>None</strong><small>No additional proof from opposite party</small></div>
-                <div class="ev-card" data-val="Weak"><div class="ev-icon">🔸</div><strong>Weak</strong><small>Limited additional proof</small></div>
-                <div class="ev-card" data-val="Medium"><div class="ev-icon">🔶</div><strong>Medium</strong><small>Moderate corroborating evidence</small></div>
-                <div class="ev-card" data-val="Strong"><div class="ev-icon">💎</div><strong>Strong</strong><small>Strong counter-evidence available</small></div>
-              </div>
-            </div>
-          </div>
-          <div class="evidence-score-box" id="ev-score-box">
-            <div class="ev-score-label">Net Evidence Score</div>
-            <div class="ev-score-detail" id="ev-score-detail">Select options above to see your score</div>
-          </div>
-          <div class="step-actions">
-            <button class="btn-back" onclick="goStep(3)">← Back</button>
-            <button class="btn-predict" onclick="submitPrediction()">🔮 Predict Win Probability</button>
-          </div>
-        </div>
-
-        <!-- STEP 5: RESULT -->
-        <div class="form-step" id="step-5">
-          <h3 class="step-title">🏛️ Your Prediction Result</h3>
-          <div id="result-loading" class="result-loading">
-            <div class="spinner"></div>
-            <p>Analysing your case with AI models...</p>
-          </div>
-          <div id="result-content" style="display:none">
-            <!-- Gauge -->
-            <div class="gauge-section">
-              <svg class="gauge-svg" viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%"   stop-color="#ef4444"/>
-                    <stop offset="50%"  stop-color="#f59e0b"/>
-                    <stop offset="100%" stop-color="#22c55e"/>
-                  </linearGradient>
-                </defs>
-                <!-- Track -->
-                <path d="M 20 160 A 130 130 0 0 1 280 160" fill="none" stroke="#e5e7eb" stroke-width="22" stroke-linecap="round"/>
-                <!-- Fill -->
-                <path id="gauge-fill" d="M 20 160 A 130 130 0 0 1 280 160" fill="none" stroke="url(#gaugeGrad)" stroke-width="22" stroke-linecap="round" stroke-dasharray="0 408"/>
-                <!-- Needle -->
-                <line id="gauge-needle" x1="150" y1="160" x2="150" y2="40" stroke="#1e293b" stroke-width="3" stroke-linecap="round"/>
-                <circle cx="150" cy="160" r="8" fill="#1e293b"/>
-                <!-- Labels -->
-                <text x="14"  y="178" font-size="11" fill="#6b7280">0</text>
-                <text x="136" y="22"  font-size="11" fill="#6b7280">50</text>
-                <text x="272" y="178" font-size="11" fill="#6b7280">100</text>
-              </svg>
-              <div class="gauge-pct" id="gauge-pct">—</div>
-              <div class="gauge-verdict" id="gauge-verdict">—</div>
-            </div>
-
-            <!-- Score cards -->
-            <div class="score-row">
-              <div class="score-card">
-                <span class="score-label">Win Probability</span>
-                <span class="score-val" id="res-prob">—</span>
-              </div>
-              <div class="score-card">
-                <span class="score-label">XGBoost Model</span>
-                <span class="score-val" id="res-xgb">—</span>
-              </div>
-              <div class="score-card">
-                <span class="score-label">Random Forest</span>
-                <span class="score-val" id="res-rf">—</span>
-              </div>
-              <div class="score-card">
-                <span class="score-label">Verdict</span>
-                <span class="score-val verdict-badge" id="res-verdict">—</span>
-              </div>
-            </div>
-
-            <!-- Key Factors -->
-            <div class="factors-grid">
-              <div class="factor-box positive">
-                <h4>✅ Factors Working In Your Favour</h4>
-                <ul id="pos-factors"></ul>
-              </div>
-              <div class="factor-box negative">
-                <h4>❌ Factors Working Against You</h4>
-                <ul id="neg-factors"></ul>
-              </div>
-            </div>
-
-            <!-- SHAP Chart -->
-            <div class="shap-section">
-              <h4>Why This Prediction? — AI Explanation</h4>
-              <p class="shap-sub">Green bars help your case · Red bars hurt your case</p>
-              <div id="shap-chart" class="shap-chart"></div>
-            </div>
-
-            <!-- Disclaimer -->
-            <div class="disclaimer">
-              ⚠️ <strong>Disclaimer:</strong> CourtX provides predictions based on historical patterns from real Indian court data. This is <em>not legal advice</em>. The prediction does not guarantee any outcome. Please consult a qualified lawyer before making any legal decision.
-            </div>
-
-            <div class="step-actions">
-              <button class="btn-back" onclick="resetPredictor()">🔄 Start New Prediction</button>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /predictor-card -->
+      <a href="/predict" class="btn-primary" style="font-size:1.1rem; padding:18px 44px; display:inline-block;">
+        🔮 Start Your Prediction →
+      </a>
+      <p style="margin-top:20px; color:var(--slate); font-size:0.88rem;">Takes less than 2 minutes · No sign-up required · Free to use</p>
     </div>
   </section>
 
@@ -430,14 +228,14 @@
           <h5>Quick Links</h5>
           <a href="#features">Features</a>
           <a href="#how-it-works">How It Works</a>
-          <a href="#predictor">Predict Now</a>
+          <a href="/predict">Predict Now</a>
         </div>
         <div class="footer-links">
           <h5>Case Types</h5>
-          <a href="#predictor">Criminal · Civil</a>
-          <a href="#predictor">Consumer · Family</a>
-          <a href="#predictor">Labour · Property</a>
-          <a href="#predictor">Motor Accident · Tax</a>
+          <a href="/predict">Criminal · Civil</a>
+          <a href="/predict">Consumer · Family</a>
+          <a href="/predict">Labour · Property</a>
+          <a href="/predict">Motor Accident · Tax</a>
         </div>
       </div>
       <div class="footer-bottom">

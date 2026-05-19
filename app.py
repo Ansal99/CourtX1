@@ -355,6 +355,12 @@ def index():
     return render_template("index.html")
 
 
+# ── NEW: Dedicated Prediction Page ───────────────────────────────────────────
+@app.route("/predict")
+def predict_page():
+    return render_template("predict.html")
+
+
 @app.route("/api/config")
 def get_config():
     return jsonify({
