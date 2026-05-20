@@ -20,9 +20,9 @@ from sklearn.metrics import (
 from xgboost import XGBClassifier
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH  = os.path.join(BASE_DIR, "data", "Final_dataset.csv")
-MODEL_DIR  = os.path.join(BASE_DIR, "models")
+BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "data", "Final_dataset.csv")
+MODEL_DIR = os.path.join(BASE_DIR, "models")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 CATEGORICAL = ["state", "case_type", "court_level",
@@ -35,6 +35,10 @@ TARGET      = "outcome"
 
 def load_and_prepare(path):
     print(f"Reading dataset from: {path}")
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"Dataset not found at {path}. Place Final_dataset.csv in the project root data/ folder."
+        )
     df = pd.read_csv(path)
     print(f"Total rows: {len(df)}")
     df = df[FEATURES + [TARGET]].dropna().copy()
